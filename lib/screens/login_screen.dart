@@ -44,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Forgot password handle
   Future<void> _showForgotPasswordDialog(BuildContext parentContext) async {
-    final emailController = TextEditingController();
+    final resetPwdEmailController = TextEditingController();
 
     await showDialog(
       context: parentContext,
@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 16),
             TextField(
-              controller: emailController,
+              controller: resetPwdEmailController,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
                 hintText: 'Email Address',
@@ -106,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              final email = emailController.text.trim();
+              final email = resetPwdEmailController.text.trim();
               if (email.isEmpty) return;
 
               parentContext.read<AuthBloc>().add(ForgotPassword(email));
@@ -129,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
 
-    emailController.dispose();
+    // resetPwdEmailController.dispose();
   }
 
   // ── Google Login ───────────────────────────────────────────────────────────

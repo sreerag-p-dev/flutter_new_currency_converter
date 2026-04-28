@@ -10,6 +10,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   AuthBloc(this.authService) : super(const AuthState()) {
     on<LoginWithEmail>(_onLoginWithEmail);
+    on<SignUpWithEmail>(_onSignUpWithEmail);
     on<LoginWithGoogle>(_onLoginWithGoogle);
     on<ForgotPassword>(_onForgotPassword);
   }
@@ -23,6 +24,53 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     try {
       await authService.signInWithEmail(event.email, event.password);
+
+      emit(state.copyWith(status: AuthStatus.success));
+    } on FirebaseAuthException catch (e) {
+      emit(
+        state.copyWith(
+          status: AuthStatus.failure,
+          errorMessage: _friendlyError(e.code),
+        ),
+      );
+    } catch (_) {
+      emit(
+        state.copyWith(
+          status: AuthStatus.failure,
+          errorMessage: 'Something went wrong. Please try again.',
+        ),
+      );
+    }
+  }
+
+  // Email Signup
+  Future<void> _onSignUpWithEmail(
+    SignUpWithEmail event,
+    Emitter<AuthState> emit,
+  ) async {
+    if (event.email.isEmpty || event.password.isEmpty) {
+      emit(
+        state.copyWith(
+          status: AuthStatus.failure,
+          errorMessage: "Please fill in all fields.",
+        ),
+      );
+      return;
+    }
+    if (event.password.length < 6) {
+      emit(
+        state.copyWith(
+          status: AuthStatus.failure,
+          errorMessage: "Password must be at least 6 characters.",
+        ),
+      );
+      return;
+    }
+
+    emit(state.copyWith(status: AuthStatus.loading, errorMessage: null));
+
+    try {
+      await authService.signUpWithEmail(event.email, event.password);
 
       emit(state.copyWith(status: AuthStatus.success));
     } on FirebaseAuthException catch (e) {

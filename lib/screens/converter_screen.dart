@@ -313,6 +313,9 @@ class _ConverterScreenState extends State<ConverterScreen> {
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
+                      onTapOutside: (_) {
+                        FocusScope.of(context).unfocus();
+                      },
                     ),
                   ),
 
