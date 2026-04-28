@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "470247889011",
+    "project_id": "newcurrencycconverter",
+    "storage_bucket": "newcurrencycconverter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:470247889011:android:12a2af612c4bcf8f0ab206",
+        "android_client_info": {
+          "package_name": "com.example.currency_converter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "470247889011-aq9o96unmhds5ap74anjrmfjunlddsc1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.currency_converter",
+            "certificate_hash": "ced667486176df4e9c89d9761c4de3bab594342c"
+          }
+        },
+        {
+          "client_id": "470247889011-aa3urpvip8tottn62uot8g94p8579arv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUWbwDTy1siQvMDfH-y54uKdyfs73HqlI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "470247889011-aa3urpvip8tottn62uot8g94p8579arv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "470247889011-fpec2vgsk67lkhlarlvd64k4afst61gs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.currencyConverter"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
