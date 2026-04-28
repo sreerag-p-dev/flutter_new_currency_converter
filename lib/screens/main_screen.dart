@@ -1,6 +1,6 @@
 import 'package:currency_converter/screens/converter_screen.dart';
 import 'package:currency_converter/screens/market_trends_screen.dart';
-import 'package:currency_converter/screens/settings_screen.dart';
+import 'package:currency_converter/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 
 class MainScreen extends StatefulWidget {
@@ -16,7 +16,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = const [
     ConverterScreen(),
     MarketTrendsScreen(),
-    SettingsScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -24,6 +24,9 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         elevation: 0,
         centerTitle: true,
         title: const Text(
@@ -50,8 +53,8 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Trends',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            label: 'Settings',
+            icon: Icon(Icons.person_outline_rounded),
+            label: 'Profile',
           ),
         ],
       ),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -13,12 +14,15 @@ class _ConverterScreenState extends State<ConverterScreen> {
   String _fromCurrency = 'USD';
   String _toCurrency = 'EUR';
   double _convertedAmount = 0.0;
+  double _displayAmount = 0.0; // animated display value
   double _rate = 0.0;
   bool _isLoading = false;
   bool _hasResult = false;
   String? _errorMessage;
 
   final TextEditingController _amountController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _resultKey = GlobalKey();
 
   static const String _accessKey = '270ca084-96a82de7-ae4aff0f-60b941d9';
 
@@ -42,11 +46,41 @@ class _ConverterScreenState extends State<ConverterScreen> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _fetchQuickRates();
+  }
+
+  @override
   void dispose() {
     _amountController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
+  // ── Count-up Animation ─────────────────────────────────────────────────────
+  void _animateCountUp(double targetAmount) {
+    const steps = 60;
+    const stepDuration = Duration(milliseconds: 20); // 60 × 20ms = 1200ms
+
+    double current = 0.0;
+    final increment = targetAmount / steps;
+    int stepCount = 0;
+
+    Timer.periodic(stepDuration, (timer) {
+      stepCount++;
+      current += increment;
+      if (stepCount >= steps) {
+        current = targetAmount;
+        timer.cancel();
+      }
+      if (mounted) {
+        setState(() => _displayAmount = current);
+      }
+    });
+  }
+
+  // ── Convert ────────────────────────────────────────────────────────────────
   Future<void> _convertNow() async {
     final amountText = _amountController.text.replaceAll(',', '');
     final amount = double.tryParse(amountText);
@@ -59,6 +93,7 @@ class _ConverterScreenState extends State<ConverterScreen> {
       _isLoading = true;
       _errorMessage = null;
       _hasResult = false;
+      _displayAmount = 0.0;
     });
 
     try {
@@ -74,11 +109,27 @@ class _ConverterScreenState extends State<ConverterScreen> {
         final result = data['result'] as Map<String, dynamic>;
         final convertedAmount = result[_toCurrency];
         final rate = result['rate'];
+
         setState(() {
           _convertedAmount = (convertedAmount).toDouble();
           _rate = (rate).toDouble();
           _hasResult = true;
         });
+
+        // 👇 Start count-up animation
+        _animateCountUp(_convertedAmount);
+
+        // 👇 Scroll to result card
+        await Future.delayed(const Duration(milliseconds: 300));
+        final resultContext = _resultKey.currentContext;
+        if (resultContext != null) {
+          Scrollable.ensureVisible(
+            resultContext,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+            alignment: 0.3,
+          );
+        }
       } else {
         setState(() => _errorMessage = 'Failed to fetch rate. Try again.');
       }
@@ -89,6 +140,7 @@ class _ConverterScreenState extends State<ConverterScreen> {
     }
   }
 
+  // ── Quick Rates ────────────────────────────────────────────────────────────
   Future<void> _fetchQuickRates() async {
     for (int i = 0; i < _quickRates.length; i++) {
       try {
@@ -109,21 +161,18 @@ class _ConverterScreenState extends State<ConverterScreen> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchQuickRates();
-  }
-
+  // ── Swap ───────────────────────────────────────────────────────────────────
   void _swapCurrencies() {
     setState(() {
       final tmp = _fromCurrency;
       _fromCurrency = _toCurrency;
       _toCurrency = tmp;
       _hasResult = false;
+      _displayAmount = 0.0;
     });
   }
 
+  // ── Currency Picker ────────────────────────────────────────────────────────
   void _openCurrencyPicker({required bool isFrom}) async {
     final picked = await showModalBottomSheet<String>(
       context: context,
@@ -145,10 +194,12 @@ class _ConverterScreenState extends State<ConverterScreen> {
           _toCurrency = picked;
         }
         _hasResult = false;
+        _displayAmount = 0.0;
       });
     }
   }
 
+  // ── Format ─────────────────────────────────────────────────────────────────
   String _formatAmount(double val) {
     if (val >= 1000) {
       return val
@@ -161,21 +212,23 @@ class _ConverterScreenState extends State<ConverterScreen> {
     return val.toStringAsFixed(2);
   }
 
+  // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        controller: _scrollController,
+        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 28),
 
             // Header
-            Center(
+            const Center(
               child: Column(
-                children: const [
+                children: [
                   Text(
                     'REAL-TIME EXCHANGE',
                     style: TextStyle(
@@ -250,7 +303,7 @@ class _ConverterScreenState extends State<ConverterScreen> {
                         letterSpacing: -0.5,
                       ),
                       decoration: const InputDecoration(
-                        hintText: "Enter amount",
+                        hintText: 'Enter amount',
                         hintStyle: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w500,
@@ -399,10 +452,11 @@ class _ConverterScreenState extends State<ConverterScreen> {
                     ),
                   ),
 
-                  // Result
+                  // ── Result Card ──────────────────────────────────────────
                   if (_hasResult) ...[
                     const SizedBox(height: 20),
                     Container(
+                      key: _resultKey,
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -426,8 +480,9 @@ class _ConverterScreenState extends State<ConverterScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
+                              // 👇 uses _displayAmount for count-up effect
                               Text(
-                                _formatAmount(_convertedAmount),
+                                _formatAmount(_displayAmount),
                                 style: const TextStyle(
                                   fontSize: 38,
                                   fontWeight: FontWeight.w800,
@@ -628,7 +683,6 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
             Center(
               child: Container(
                 width: 40,
@@ -649,7 +703,6 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
               ),
             ),
             const SizedBox(height: 14),
-            // Search
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
               decoration: BoxDecoration(
@@ -681,7 +734,6 @@ class _CurrencyPickerSheetState extends State<_CurrencyPickerSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            // List
             Expanded(
               child: ListView.builder(
                 controller: controller,
